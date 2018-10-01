@@ -88,7 +88,8 @@ class SubmarineCaptain(Player):
                 q = -1
 
             (lp, tp, np) = self.last_probed
-            if (times_probed == 0 and v < np * (self.t - tp) / self.m):
+            consm=self.m/200
+            if (times_probed == 0 and v < consm * np * (self.t - tp) / self.m):
                 self.direction = self.move_to_lastprob()
                 self.t += 1
                 self.curloc += self.direction
