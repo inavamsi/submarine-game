@@ -20,6 +20,8 @@ class TrenchManager(Player):
         self.submarineLocationRange = (0, 0)
         self.timeLapsed = 0
         self.nextProbeTime = 0
+        self.isRedAlert = False
+        self.shortestPathToDanger = 0
 
     def play_game(self):
         while True:
@@ -48,33 +50,52 @@ class TrenchManager(Player):
         """
         probesToBeSent = []
         self.timeLapsed += 1
+        print("Time Lapsed: ")
+        print(self.timeLapsed)
 
         if self.firstTurn:
             self.firstTurn = False
             midRed = (self.d + 2)%100
             if self.L == 2:
                 probesToBeSent = [midRed, (midRed+5)%100, (midRed+51)%100]
+                self.lastProbesSent = probesToBeSent
 
             else:
                 probesToBeSent = [midRed, (midRed+51)%100]
+                self.lastProbesSent = probesToBeSent
 
         elif self.isProbed:
+            print("PROBEDDDDDD")
             self.isProbed = False
             a, b = self.d, (self.d+5)%100
             c, d = self.submarineLocationRange
+            print("Submarine Range: ", c, d)
             d1 = a-d
             d2 = c-b
-            if(d1<0):
-                d1 = 100 + d1
-            if(d2<0):
-                d2 = 100 + d2
-            shortestPathToDanger = min(d1, d2)
-            self.nextProbeTime = self.timeLapsed + shortestPathToDanger
+            if(d1<0 and d2<0):
+                self.shortestPathToDanger = 4
+            else:
+                if(d1<0):
+                    d1 = 100 + d1
+                if(d2<0):
+                    d2 = 100 + d2
+                print("d1:", d1)
+                print("d2: ", d2)
+                self.shortestPathToDanger = min(d1, d2)-1
+                print("Shortest path: ", self.shortestPathToDanger)
+                self.nextProbeTime = self.timeLapsed + self.shortestPathToDanger
+                print("Next probe time")
+                print(self.nextProbeTime)
+                if self.shortestPathToDanger == 1:
+                    self.firstTurn = True
+            probesToBeSent = []
 
         else:
             if self.timeLapsed < self.nextProbeTime - 1:
                 probesToBeSent = []
             elif self.timeLapsed == self.nextProbeTime - 1:
+                print("Now in second last stage")
+                self.isRedAlert = False
                 self.firstTurn = True
                 probesToBeSent = []
             elif self.lastProbesSent.__len__() == 3:
@@ -85,6 +106,7 @@ class TrenchManager(Player):
                     else 100 + (self.lastProbesSent[2] - 2 * self.L) % 100
                 p4 = (self.lastProbesSent[2] + 2 * self.L) % 100
                 probesToBeSent = [p1, p2, p3, p4]
+                self.lastProbesSent = probesToBeSent
             elif self.lastProbesSent.__len__() == 2:
                 p1 = (self.lastProbesSent[0] - 2 * self.L) % 100 if (self.lastProbesSent[0] - 2 * self.L) % 100 >= 0 \
                     else 100 + (self.lastProbesSent[0] - 2 * self.L) % 100
@@ -93,6 +115,7 @@ class TrenchManager(Player):
                     else 100 + (self.lastProbesSent[1] - 2 * self.L) % 100
                 p4 = (self.lastProbesSent[1] + 2 * self.L) % 100
                 probesToBeSent = [p1, p2, p3, p4]
+                self.lastProbesSent = probesToBeSent
 
             else:
                 p1 = (self.lastProbesSent[0]-2*self.L)%100 if (self.lastProbesSent[0]-2*self.L)%100>0 else 100+(self.lastProbesSent[0]-2*self.L)%100
@@ -101,8 +124,9 @@ class TrenchManager(Player):
                                                                                                                    self.lastProbesSent[2]-2*self.L)%100
                 p4 = (self.lastProbesSent[3]+2*self.L)%100
                 probesToBeSent = [p1, p2, p3, p4]
+                self.lastProbesSent = probesToBeSent
 
-        self.lastProbesSent = probesToBeSent
+
         return probesToBeSent
 
 
@@ -121,12 +145,15 @@ class TrenchManager(Player):
 
         You must return one of two options: 'red' or 'yellow'
         """
+        if self.isRedAlert:
+            return 'red'
         for ele in results:
             if ele:
                 self.isProbed = True
                 index = results.index(ele)
-                c = (index - self.L)%100
-                d = (index + self.L)%100
+                pos = sent_probes[index]
+                c = (pos - self.L)%100
+                d = (pos + self.L)%100
                 if(c < 0):
                     c = 100 + c
                 elif(d < 0):
@@ -134,6 +161,9 @@ class TrenchManager(Player):
                 self.submarineLocationRange = c, d
                 for ele in range(c, c+2*self.L+1):
                     if ele in range(self.d, (self.d + 5) % 100):
+                        self.isRedAlert = True
                         return 'red'
+                self.isRedAlert = False
                 return 'yellow'
+        self.isRedAlert = False
         return 'yellow'

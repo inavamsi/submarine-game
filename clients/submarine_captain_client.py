@@ -58,7 +58,7 @@ class SubmarineCaptain(Player):
             return 1
 
     def move_to_lastprob(self):
-        (l, t, n) = self.last_probed
+        (l, to, n) = self.last_probed
         if (l - self.curloc) % 100 < 50:
             return 1
         else:
@@ -76,7 +76,7 @@ class SubmarineCaptain(Player):
 
         else:
             self.probetime_arr[self.curloc].append((self.t, times_probed))
-            self.calculate_score(self)
+            self.calculate_score()
             r = random.random()
             s = random.random()
             w = random.random()
@@ -88,32 +88,32 @@ class SubmarineCaptain(Player):
                 q = -1
 
             (lp, tp, np) = self.last_probed
-            if (times_probed == 0 and v < self.n * (self.t - tp) / self.m):
+            if (times_probed == 0 and v < np * (self.t - tp) / self.m):
                 self.direction = self.move_to_lastprob()
                 self.t += 1
-                self.curloc += direction
+                self.curloc += self.direction
                 self.curloc = self.curloc % 100
                 if (times_probed > 0):
-                    last_probed = (self.curloc, self.t, times_probed)
-                return direction
+                    self.last_probed = (self.curloc, self.t, times_probed)
+                return self.direction
 
             if (r < 0.05):
                 self.direction = self.move_to_max()
             else:
                 if (self.score_arr[(self.curloc + q) % 100] > self.score_arr[self.curloc]):
-                    direction = q
+                    self.direction = q
                 else:
                     if (w > (self.t / self.m)):
-                        direction = q
+                        self.direction = q
                     else:
-                        direction = 0
+                        self.direction = 0
 
             self.t += 1
-            self.curloc += direction
-            curloc = self.curloc % 100
+            self.curloc += self.direction
+            self.curloc = self.curloc % 100
             if (times_probed > 0):
-                last_probed = (curloc, self.t, times_probed)
-            return direction
+                self.last_probed = (self.curloc, self.t, times_probed)
+            return self.direction
         """
         PLACE YOUR ALGORITHM HERE
         As the submarine captain, you only ever have access to your position (self.position),
